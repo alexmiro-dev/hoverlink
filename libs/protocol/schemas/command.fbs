@@ -1,0 +1,30 @@
+
+namespace fgsim.protocol;
+
+// Command types for FlightGear control
+enum CommandType : byte {
+  Start,
+  Stop,
+  Pause,
+  Resume,
+  Reset,
+  Configure
+}
+
+// Configuration for FlightGear
+table FlightGearConfig {
+  aircraft: string;
+  airport: string;
+  time_of_day: string;
+  weather: string;
+  additional_args: [string];
+}
+
+// Command message sent from HoverLink to FGManager
+table Command {
+  type: CommandType;
+  timestamp: uint64;
+  config: FlightGearConfig;  // Only used for Configure and Start commands
+}
+
+root_type Command;

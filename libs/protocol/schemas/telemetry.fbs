@@ -1,0 +1,49 @@
+namespace fgsim.protocol;
+
+// Helicopter telemetry data received from FlightGear
+table HelicopterTelemetry {
+  // Position
+  latitude: double;
+  longitude: double;
+  altitude: double;
+
+  // Attitude
+  roll: float;    // Degrees
+  pitch: float;   // Degrees
+  heading: float; // Degrees
+
+  // Velocities
+  airspeed: float;     // Knots
+  vertical_speed: float; // Feet per minute
+  ground_speed: float;   // Knots
+
+  // Engine
+  engine_rpm: float;
+  rotor_rpm: float;
+
+  // Control inputs
+  collective: float; // 0.0 to 1.0
+  cyclic_lat: float; // -1.0 to 1.0
+  cyclic_lon: float; // -1.0 to 1.0
+  pedals: float;     // -1.0 to 1.0
+
+  // Environment
+  wind_speed: float;     // Knots
+  wind_direction: float; // Degrees
+  temperature: float;    // Celsius
+
+  // System
+  timestamp: uint64;     // Timestamp in milliseconds
+  sim_time: float;       // Simulation time in seconds
+}
+
+// Control commands sent from HoverLink to FlightGear
+table HelicopterControl {
+  collective: float; // 0.0 to 1.0
+  cyclic_lat: float; // -1.0 to 1.0
+  cyclic_lon: float; // -1.0 to 1.0
+  pedals: float;     // -1.0 to 1.0
+  timestamp: uint64; // Timestamp in milliseconds
+}
+
+root_type HelicopterTelemetry;

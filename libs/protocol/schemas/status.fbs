@@ -1,0 +1,24 @@
+
+namespace fgsim.protocol;
+
+// FlightGear process status
+enum FGStatus : byte {
+  Idle,
+  Starting,
+  Running,
+  Paused,
+  Stopping,
+  Error
+}
+
+// Status message sent from FGManager to HoverLink
+table Status {
+  status: FGStatus;
+  timestamp: uint64;
+  message: string;  // Optional status message or error details
+  uptime: uint64;   // FlightGear process uptime in seconds
+  cpu_usage: float; // CPU usage percentage
+  mem_usage: float; // Memory usage in MB
+}
+
+root_type Status;

@@ -1,4 +1,4 @@
 option('enable_tests', type : 'boolean', value : false, description : 'Enable building tests')
-option('enable_examples', type : 'boolean', value : false, description : 'Enable building examples')
-option('tcp_port', type : 'integer', value : 8080, description : 'Default TCP port')
-option('udp_port', type : 'integer', value : 8081, description : 'Default UDP port')
+option('fg_path', type : 'string', value : '/usr/bin/fgfs', description : 'Path to FlightGear executable')
+option('fg_protocol_port', type : 'integer', value : 5501, description : 'FlightGear UDP telemetry port')
+option('tcp_control_port', type : 'integer', value : 5502, description : 'TCP port for control communication')

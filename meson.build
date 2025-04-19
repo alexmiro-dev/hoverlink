@@ -1,4 +1,4 @@
-project('hoverlink', 'cpp',
+project('fgsim_control', 'cpp',
   version : '0.1.0',
   default_options : [
     'cpp_std=c++23',
@@ -16,18 +16,6 @@ endif
 # Find Boost dependency
 boost_dep = dependency('boost', modules : ['system', 'thread'], version : '>=1.74.0')
 
-# Include directories
-inc_dir = include_directories('include')
-
-# Source files
-src_files = [
-  'src/main.cpp',
-]
-
-# Build the executable
-executable('hoverlink',
-  src_files,
-  include_directories : inc_dir,
-  dependencies : [boost_dep],
-  install : true
-)
+# Process subdirectories
+subdir('libs')
+subdir('apps')
