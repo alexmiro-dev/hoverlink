@@ -2,13 +2,14 @@
 #include <iostream>
 
 namespace network {
-
 TCPClient::TCPClient(boost::asio::io_context& io_context)
     : io_context_(io_context),
       socket_(std::make_unique<boost::asio::ip::tcp::socket>(io_context)),
       connected_(false),
-      message_handler_([](const uint8_t*, std::size_t) {}),
-      disconnect_handler_([]() {}) {
+      message_handler_([](uint8_t const*, std::size_t) {
+      }),
+      disconnect_handler_([]() {
+      }) {
     log_info("TCP client initialized");
 }
 
@@ -16,25 +17,25 @@ TCPClient::~TCPClient() {
     disconnect();
 }
 
-void TCPClient::connect(const std::string& host, int port, ConnectHandler handler) {
+void TCPClient::connect(std::string const& host, int port, ConnectHandler const& handler) {
     if (connected_) {
         disconnect();
     }
-    
+
     boost::asio::ip::tcp::resolver resolver(io_context_);
-    
+
     try {
         auto endpoints = resolver.resolve(host, std::to_string(port));
-        
+
         boost::asio::async_connect(*socket_, endpoints,
-            [this, handler](const boost::system::error_code& error, 
-                         const boost::asio::ip::tcp::endpoint& /*endpoint*/) {
+            [this, handler](boost::system::error_code const& error,
+            boost::asio::ip::tcp::endpoint const& /*endpoint*/) {
                 if (!error) {
                     connected_ = true;
-                    log_info("Connected to server at " + 
-                            socket_->remote_endpoint().address().to_string() + ":" + 
-                            std::to_string(socket_->remote_endpoint().port()));
-                    
+                    log_info("Connected to server at " +
+                             socket_->remote_endpoint().address().to_string() + ":" +
+                             std::to_string(socket_->remote_endpoint().port()));
+
                     start_read();
                     handler(true);
                 } else {
@@ -42,7 +43,7 @@ void TCPClient::connect(const std::string& host, int port, ConnectHandler handle
                     handler(false);
                 }
             });
-    } catch (const std::exception& e) {
+    } catch (std::exception const& e) {
         log_error("Resolve error: " + std::string(e.what()));
         handler(false);
     }
@@ -51,8 +52,8 @@ void TCPClient::connect(const std::string& host, int port, ConnectHandler handle
 void TCPClient::disconnect() {
     if (connected_ && socket_->is_open()) {
         boost::system::error_code ec;
-        socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-        socket_->close(ec);
+        std::ignore = socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        std::ignore = socket_->close(ec);
         connected_ = false;
         log_info("Disconnected from server");
         disconnect_handler_();
@@ -63,15 +64,15 @@ bool TCPClient::is_connected() const {
     return connected_ && socket_->is_open();
 }
 
-void TCPClient::send_data(const uint8_t* data, std::size_t length) {
+void TCPClient::send_data(uint8_t const* data, std::size_t length) {
     if (!is_connected()) {
         log_error("Cannot send: not connected");
         return;
     }
-    
-    boost::asio::async_write(*socket_, 
+
+    boost::asio::async_write(*socket_,
         boost::asio::buffer(data, length),
-        [this](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
+        [this](boost::system::error_code const& error, std::size_t /*bytes_transferred*/) {
             if (error) {
                 log_error("Send error: " + error.message());
                 if (error == boost::asio::error::connection_reset ||
@@ -94,20 +95,20 @@ void TCPClient::start_read() {
     if (!is_connected()) {
         return;
     }
-    
+
     socket_->async_read_some(
         boost::asio::buffer(recv_buffer_),
-        [this](const boost::system::error_code& error, std::size_t bytes_transferred) {
+        [this](boost::system::error_code const& error, std::size_t bytes_transferred) {
             this->handle_read(error, bytes_transferred);
         });
 }
 
-void TCPClient::handle_read(const boost::system::error_code& error, 
-                          std::size_t bytes_transferred) {
+void TCPClient::handle_read(boost::system::error_code const& error,
+    std::size_t bytes_transferred) {
     if (!error) {
         // Call the message handler with binary data for flatbuffer
         message_handler_(recv_buffer_.data(), bytes_transferred);
-        
+
         // Continue reading
         start_read();
     } else if (error == boost::asio::error::eof ||
@@ -119,5 +120,4 @@ void TCPClient::handle_read(const boost::system::error_code& error,
         disconnect();
     }
 }
-
 } // namespace network

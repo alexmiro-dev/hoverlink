@@ -1,0 +1,59 @@
+Checks: >
+  bugprone-*
+  cert-*
+  clang-analyzer-*
+  cppcoreguidelines-*
+  modernize-*
+  performance-*
+  readability-*
+  portability-*
+  misc-*
+  readability-braces-around-statements
+  readability-identifier-naming
+  -modernize-use-trailing-return-type
+  -cppcoreguidelines-owning-memory  # too aggressive
+  -cppcoreguidelines-pro-type-vararg  # common in C APIs
+  -cppcoreguidelines-avoid-magic-numbers  # noisy without context
+  -readability-magic-numbers
+
+CheckOptions:
+  # Use east const style: `int const x` instead of `const int x`
+  - key: modernize-const.UseEastConst
+    value: 'true'
+
+  # Use `auto` only when it improves readability
+  - key: modernize-use-auto.MinTypeNameLength
+    value: '5'
+
+  # Enable readability braces even on single-line control statements
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: '1'
+
+  # Warn when functions are too complex
+  - key: readability-function-size.LineThreshold
+    value: '100'
+
+  # Use nullptr instead of NULL or 0
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+
+  # Use range-based for when applicable
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+
+  # Allow certain macros in legacy or cross-platform code
+  - key: cppcoreguidelines-macro-usage.IgnoreCommandLineDefines
+    value: '1'
+
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: '0'
+
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '^_'  # allow _internal or _ignored functions if needed
+
+  # Optional: also apply to method names
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case

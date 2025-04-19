@@ -6,11 +6,10 @@
 #include <chrono>
 
 namespace protocol {
-
 // Helper to get current timestamp in milliseconds
 uint64_t get_timestamp() {
-    auto now = std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch();
+    auto const now = std::chrono::system_clock::now();
+    auto const duration = now.time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 }
 
@@ -18,116 +17,109 @@ uint64_t get_timestamp() {
 std::vector<uint8_t> CommandMessage::create(Type type) {
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    auto fb_type = static_cast<fgsim::protocol::CommandType>(static_cast<int>(type));
-    auto timestamp = get_timestamp();
+    auto const fb_type = static_cast<fgsim::protocol::CommandType>(static_cast<int>(type));
+    auto const timestamp = get_timestamp();
 
-    auto command = fgsim::protocol::CreateCommand(
+    auto const command = fgsim::protocol::CreateCommand(
         builder,
         fb_type,
         timestamp,
-        0  // No config
-    );
+        0 // No config
+        );
 
     builder.Finish(command);
 
     // Copy to std::vector
     uint8_t* buf = builder.GetBufferPointer();
-    size_t size = builder.GetSize();
-    return std::vector<uint8_t>(buf, buf + size);
+    size_t const size = builder.GetSize();
+    return {buf, buf + size};
 }
 
-std::vector<uint8_t> CommandMessage::create(Type type, const Config& config) {
+std::vector<uint8_t> CommandMessage::create(Type type, Config const& config) {
     flatbuffers::FlatBufferBuilder builder(1024);
 
     // Create additional args vector
     std::vector<flatbuffers::Offset<flatbuffers::String>> fb_args;
-    for (const auto& arg : config.additional_args) {
+    for (auto const& arg : config.additional_args) {
         fb_args.push_back(builder.CreateString(arg));
     }
-    auto args_vec = builder.CreateVector(fb_args);
+    auto const args_vec = builder.CreateVector(fb_args);
 
     // Create config
-    auto fb_config = fgsim::protocol::CreateFlightGearConfig(
+    auto const fb_config = fgsim::protocol::CreateFlightGearConfig(
         builder,
         builder.CreateString(config.aircraft),
         builder.CreateString(config.airport),
         builder.CreateString(config.time_of_day),
         builder.CreateString(config.weather),
         args_vec
-    );
+        );
 
-    auto fb_type = static_cast<fgsim::protocol::CommandType>(static_cast<int>(type));
-    auto timestamp = get_timestamp();
+    auto const fb_type = static_cast<fgsim::protocol::CommandType>(static_cast<int>(type));
+    auto const timestamp = get_timestamp();
 
-    auto command = fgsim::protocol::CreateCommand(
+    auto const command = fgsim::protocol::CreateCommand(
         builder,
         fb_type,
         timestamp,
         fb_config
-    );
+        );
 
     builder.Finish(command);
 
     // Copy to std::vector
     uint8_t* buf = builder.GetBufferPointer();
-    size_t size = builder.GetSize();
-    return std::vector<uint8_t>(buf, buf + size);
+    size_t const size = builder.GetSize();
+    return {buf, buf + size};
 }
 
-bool CommandMessage::parse(const uint8_t* data, size_t size, Type& type, Config& config) {
+bool CommandMessage::parse(uint8_t const* data, size_t size, Type& type, Config& config) {
     // Verify the buffer
-    flatbuffers::Verifier verifier(data, size);
-    if (!fgsim::protocol::VerifyCommandBuffer(verifier)) {
+    if (flatbuffers::Verifier verifier(data, size); !fgsim::protocol::VerifyCommandBuffer(verifier)) {
         return false;
     }
-
-    auto command = fgsim::protocol::GetCommand(data);
+    auto const command = fgsim::protocol::GetCommand(data);
 
     // Extract command type
     type = static_cast<Type>(static_cast<int>(command->type()));
 
     // Extract config if available
     if (command->config()) {
-        auto fb_config = command->config();
+        auto const fb_config = command->config();
 
         if (fb_config->aircraft()) {
             config.aircraft = fb_config->aircraft()->str();
         }
-
         if (fb_config->airport()) {
             config.airport = fb_config->airport()->str();
         }
-
         if (fb_config->time_of_day()) {
             config.time_of_day = fb_config->time_of_day()->str();
         }
-
         if (fb_config->weather()) {
             config.weather = fb_config->weather()->str();
         }
-
         // Extract additional args
         config.additional_args.clear();
         if (fb_config->additional_args()) {
-            for (const auto& arg : *fb_config->additional_args()) {
+            for (auto const& arg : *fb_config->additional_args()) {
                 if (arg) {
                     config.additional_args.push_back(arg->str());
                 }
             }
         }
     }
-
     return true;
 }
 
 // StatusMessage implementation
-std::vector<uint8_t> StatusMessage::create(const StatusInfo& info) {
+std::vector<uint8_t> StatusMessage::create(StatusInfo const& info) {
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    auto fb_status = static_cast<fgsim::protocol::FGStatus>(static_cast<int>(info.status));
-    auto message = builder.CreateString(info.message);
+    auto const fb_status = static_cast<fgsim::protocol::FGStatus>(static_cast<int>(info.status));
+    auto const message = builder.CreateString(info.message);
 
-    auto status = fgsim::protocol::CreateStatus(
+    auto const status = fgsim::protocol::CreateStatus(
         builder,
         fb_status,
         info.timestamp ? info.timestamp : get_timestamp(),
@@ -135,24 +127,22 @@ std::vector<uint8_t> StatusMessage::create(const StatusInfo& info) {
         info.uptime,
         info.cpu_usage,
         info.mem_usage
-    );
+        );
 
     builder.Finish(status);
 
     // Copy to std::vector
     uint8_t* buf = builder.GetBufferPointer();
-    size_t size = builder.GetSize();
-    return std::vector<uint8_t>(buf, buf + size);
+    size_t const size = builder.GetSize();
+    return {buf, buf + size};
 }
 
-bool StatusMessage::parse(const uint8_t* data, size_t size, StatusInfo& info) {
+bool StatusMessage::parse(uint8_t const* data, size_t size, StatusInfo& info) {
     // Verify the buffer
-    flatbuffers::Verifier verifier(data, size);
-    if (!fgsim::protocol::VerifyStatusBuffer(verifier)) {
+    if (flatbuffers::Verifier verifier(data, size); !fgsim::protocol::VerifyStatusBuffer(verifier)) {
         return false;
     }
-
-    auto status = fgsim::protocol::GetStatus(data);
+    auto const status = fgsim::protocol::GetStatus(data);
 
     // Extract status info
     info.status = static_cast<Status>(static_cast<int>(status->status()));
@@ -163,7 +153,6 @@ bool StatusMessage::parse(const uint8_t* data, size_t size, StatusInfo& info) {
     } else {
         info.message = "";
     }
-
     info.uptime = status->uptime();
     info.cpu_usage = status->cpu_usage();
     info.mem_usage = status->mem_usage();
@@ -172,14 +161,12 @@ bool StatusMessage::parse(const uint8_t* data, size_t size, StatusInfo& info) {
 }
 
 // TelemetryMessage implementation
-bool TelemetryMessage::parse(const uint8_t* data, size_t size, Telemetry& telemetry) {
+bool TelemetryMessage::parse(uint8_t const* data, size_t size, Telemetry& telemetry) {
     // Verify the buffer
-    flatbuffers::Verifier verifier(data, size);
-    if (!fgsim::protocol::VerifyHelicopterTelemetryBuffer(verifier)) {
+    if (flatbuffers::Verifier verifier(data, size); !fgsim::protocol::VerifyHelicopterTelemetryBuffer(verifier)) {
         return false;
     }
-
-    auto fb_telemetry = fgsim::protocol::GetHelicopterTelemetry(data);
+    auto const fb_telemetry = fgsim::protocol::GetHelicopterTelemetry(data);
 
     // Extract all telemetry fields
     telemetry.latitude = fb_telemetry->latitude();
@@ -213,26 +200,25 @@ bool TelemetryMessage::parse(const uint8_t* data, size_t size, Telemetry& teleme
 }
 
 // ControlMessage implementation
-std::vector<uint8_t> ControlMessage::create(const Control& control) {
+std::vector<uint8_t> ControlMessage::create(Control const& control) {
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    auto timestamp = control.timestamp ? control.timestamp : get_timestamp();
+    auto const timestamp = control.timestamp ? control.timestamp : get_timestamp();
 
-    auto fb_control = fgsim::protocol::CreateHelicopterControl(
+    auto const fb_control = fgsim::protocol::CreateHelicopterControl(
         builder,
         control.collective,
         control.cyclic_lat,
         control.cyclic_lon,
         control.pedals,
         timestamp
-    );
+        );
 
     builder.Finish(fb_control);
 
     // Copy to std::vector
     uint8_t* buf = builder.GetBufferPointer();
-    size_t size = builder.GetSize();
-    return std::vector<uint8_t>(buf, buf + size);
+    size_t const size = builder.GetSize();
+    return {buf, buf + size};
 }
-
 } // namespace protocol

@@ -8,35 +8,34 @@
 #include "network/common.hpp"
 
 namespace network {
-
 class TCPConnection : public std::enable_shared_from_this<TCPConnection> {
 public:
-    using MessageHandler = std::function<void(const uint8_t*, std::size_t, 
-                                           std::shared_ptr<TCPConnection>)>;
+    using MessageHandler = std::function<void(uint8_t const*, std::size_t,
+                                              std::shared_ptr<TCPConnection>)>;
     using DisconnectHandler = std::function<void(std::shared_ptr<TCPConnection>)>;
-    
-    TCPConnection(boost::asio::ip::tcp::socket socket);
-    
+
+    explicit TCPConnection(boost::asio::ip::tcp::socket socket);
+
     // Start reading data from the connection
     void start();
-    
+
     // Send binary data (flatbuffers)
-    void send_data(const uint8_t* data, std::size_t length);
-    
+    void send_data(uint8_t const* data, std::size_t length);
+
     // Close the connection
     void close();
-    
+
     // Get endpoint information
     std::string get_endpoint_string() const;
     boost::asio::ip::tcp::endpoint get_endpoint() const;
-    
+
     // Set handlers
     void set_message_handler(MessageHandler handler);
     void set_disconnect_handler(DisconnectHandler handler);
 
 private:
     void start_read();
-    void handle_read(const boost::system::error_code& error, std::size_t bytes_transferred);
+    void handle_read(boost::system::error_code const& error, std::size_t bytes_transferred);
 
     boost::asio::ip::tcp::socket socket_;
     std::array<uint8_t, MAX_BUFFER_SIZE> recv_buffer_;
@@ -47,29 +46,29 @@ private:
 class TCPServer {
 public:
     using ConnectionHandler = std::function<void(std::shared_ptr<TCPConnection>)>;
-    
-    explicit TCPServer(boost::asio::io_context& io_context, 
-                      int port = DEFAULT_TCP_PORT);
+
+    explicit TCPServer(boost::asio::io_context& io_context,
+                       int port = DEFAULT_TCP_PORT);
 
     // Start accepting connections
     void start();
-    
+
     // Stop the server
     void stop();
-    
+
     // Broadcast data to all clients
-    void broadcast(const uint8_t* data, std::size_t length);
-    
+    void broadcast(uint8_t const* data, std::size_t length) const;
+
     // Get number of connected clients
-    std::size_t connection_count() const;
-    
+    [[nodiscard]] std::size_t connection_count() const;
+
     // Set handlers
     void set_connection_handler(ConnectionHandler handler);
 
 private:
     void start_accept();
     void handle_accept(std::shared_ptr<TCPConnection> connection,
-                      const boost::system::error_code& error);
+                       boost::system::error_code const& error);
     void handle_client_disconnect(std::shared_ptr<TCPConnection> connection);
 
     boost::asio::io_context& io_context_;
@@ -78,5 +77,4 @@ private:
     std::set<std::shared_ptr<TCPConnection>> connections_;
     ConnectionHandler connection_handler_;
 };
-
 } // namespace network

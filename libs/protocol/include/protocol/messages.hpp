@@ -17,7 +17,6 @@ struct FlightGearConfig;
 }
 
 namespace protocol {
-
 // Wrapper class for Command messages
 class CommandMessage {
 public:
@@ -42,10 +41,10 @@ public:
     static std::vector<uint8_t> create(Type type);
 
     // Create command with configuration
-    static std::vector<uint8_t> create(Type type, const Config& config);
+    static std::vector<uint8_t> create(Type type, Config const& config);
 
     // Parse command from binary data
-    static bool parse(const uint8_t* data, size_t size, Type& type, Config& config);
+    static bool parse(uint8_t const* data, size_t size, Type& type, Config& config);
 };
 
 // Wrapper class for Status messages
@@ -70,10 +69,10 @@ public:
     };
 
     // Create status message
-    static std::vector<uint8_t> create(const StatusInfo& info);
+    static std::vector<uint8_t> create(StatusInfo const& info);
 
     // Parse status from binary data
-    static bool parse(const uint8_t* data, size_t size, StatusInfo& info);
+    static bool parse(uint8_t const* data, size_t size, StatusInfo& info);
 };
 
 // Wrapper class for Telemetry messages
@@ -116,7 +115,7 @@ public:
     };
 
     // Parse telemetry from binary data
-    static bool parse(const uint8_t* data, size_t size, Telemetry& telemetry);
+    static bool parse(uint8_t const* data, size_t size, Telemetry& telemetry);
 };
 
 // Wrapper class for Control messages
@@ -131,7 +130,6 @@ public:
     };
 
     // Create control message
-    static std::vector<uint8_t> create(const Control& control);
+    static std::vector<uint8_t> create(Control const& control);
 };
-
 } // namespace protocol
